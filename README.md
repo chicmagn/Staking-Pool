@@ -1,2 +1,2 @@
 # Staking
-Staking Contract
+Staking Pool Smart Contract for Ethereum
