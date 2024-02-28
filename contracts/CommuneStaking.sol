@@ -10,7 +10,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ComRewardToken.sol";
 import "./ComStakeToken.sol";
 
+import "./libs/PriceConverter.sol";
+
 contract CommuneStaking is Ownable, Pausable, ReentrancyGuard {
+
+    using PriceConverter for uint256;
 
     IERC20 public stakeToken;
     IERC20 public rewardToken;
