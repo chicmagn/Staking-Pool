@@ -1,3 +1,7 @@
 {
-  "name": "hardhat-project"
+  "name": "staking-pool",
+  "author": "chic magn",
+  "dependencies": {
+    "web3": "^4.5.0"
+  }
 }
