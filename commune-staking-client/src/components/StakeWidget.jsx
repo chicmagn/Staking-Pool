@@ -37,8 +37,8 @@ export default function StakeWidget() {
         }, 10000);
     }, []);
 
-    const [stakeAmount, setStakeAmount] = useState<string>("0");
-    const [unstakeAmount, setUnstakeAmount] = useState<string>("0");
+    const [stakeAmount, setStakeAmount] = useState("0");
+    const [unstakeAmount, setUnstakeAmount] = useState("0");
 
     function resetValue(){
         setStakeAmount("0");
