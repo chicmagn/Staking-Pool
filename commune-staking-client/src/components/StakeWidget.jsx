@@ -1,40 +1,37 @@
 import React, {useEffect, useState} from "react";
 import { ethers } from "ethers";
-import { COMMUNE_REWARD_TOKEN_ADDRESS, COMMUNE_STAKE_TOKEN_ADDRESS, COMMUNE_STAKING_CONTRACT_ADDRESS } from "../constants/addresses";
-import { Web3Button, useAddress, useContract, useContractRead, useTokenBalance} from "@thirdweb-dev/react";
-import { Box, Card, Flex, Heading, Input, SimpleGrid, Skeleton, Stack, Text, useToast } from "@chakra-ui/react";
-
+import { COMMUNE_STAKING_CONTRACT_ADDRESS } from "../constants/addresses";
+import { Box, Button, Card, Flex, Heading, Input, SimpleGrid, Skeleton, Stack, Text, useToast } from "@chakra-ui/react";
+import ComStakingJson from '../../../artifacts/contracts/ComStaking.sol/ComStaking.json';
+import { useSDK } from "@metamask/sdk-react";
 export default function StakeWidget() {
+    const { sdk, connected, connecting, provider, chainId, account } = useSDK();
+    const [stakeInfo, setStakeInfo] = useState();
+    useEffect(()=>{
+        
+    }, []);
 
-    const address = useAddress();
-    const {
-        contract: stakeTokenContract
-    } = useContract(COMMUNE_STAKE_TOKEN_ADDRESS, "token");
-
-    const {
-        contract: rewardTokenContract
-    } = useContract(COMMUNE_REWARD_TOKEN_ADDRESS, "token");
-
-    const {
-        contract: stakeContract
-    } = useContract(COMMUNE_STAKING_CONTRACT_ADDRESS, "custom");
-
-    const {
-        data: stakeTokenBalance,
-        isLoading: loadingStakeTokenBalance
-    } = useTokenBalance( stakeTokenContract, address );
-
-    const {
-        data: rewardTokenBalance,
-        isLoading: loadingRewardTokenBalance
-    } = useTokenBalance (rewardTokenContract, address);
-
-    const {data: stakeInfo, refetch: refetchStakeInfo, isLoading: loadingStakeInfo} = useContractRead(stakeContract, "getStakeInfo", [address]);
+    const getStakeInfo = async () => {
+        try {
+            if (window.ethereum){
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const ComStakingContract = new ethers.Contract(COMMUNE_STAKING_CONTRACT_ADDRESS, ComStakingJson.abi, signer);
+                await ComStakingContract.getStakeInfo(account).then(data=> {
+                    setStakeInfo(data);
+                })
+            } else {
+                console.log("Ethereum Object doesn't exist")
+            }
+        } catch (e) {
+            console.log(e)
+        }
+    }
 
     useEffect(()=> {
         setInterval(() => {
-            refetchStakeInfo();
-        }, 10000);
+            getStakeInfo();
+        }, 5000);
     }, []);
 
     const [stakeAmount, setStakeAmount] = useState("0");
@@ -43,6 +40,78 @@ export default function StakeWidget() {
     function resetValue(){
         setStakeAmount("0");
         setUnstakeAmount("0");
+    }
+
+    const stake = async() => {
+        try {
+            if (window.ethereum){
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const ComStakingContract = new ethers.Contract(COMMUNE_STAKING_CONTRACT_ADDRESS, ComStakingJson.abi, signer);
+                await ComStakingContract.stake(stakeAmount).then(data=> {
+                    resetValue();
+                    console.log(data);
+                    ()=> toast({
+                        title: "Stake Successful",
+                        status: 'success',
+                        duration: 5000,
+                        isClosable: true
+                    });
+                })
+            } else {
+                console.log("Ethereum Object doesn't exist")
+            }
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const withdraw = async() => {
+        try {
+            if (window.ethereum){
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const ComStakingContract = new ethers.Contract(COMMUNE_STAKING_CONTRACT_ADDRESS, ComStakingJson.abi, signer);
+                await ComStakingContract.withdraw(unstakeAmount).then(data=> {
+                    resetValue();
+                    console.log(data);
+                    ()=> toast({
+                        title: "Unstake Successful",
+                        status: 'success',
+                        duration: 5000,
+                        isClosable: true
+                    });
+                })
+            } else {
+                console.log("Ethereum Object doesn't exist")
+            }
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const claimRewards = async() => {
+        try {
+            if (window.ethereum){
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const ComStakingContract = new ethers.Contract(COMMUNE_STAKING_CONTRACT_ADDRESS, ComStakingJson.abi, signer);
+                await ComStakingContract.claimRewards().then(data=> {
+                    resetValue();
+                    console.log(data);
+                    ()=> toast({
+                        title: "Claim Successful",
+                        status: 'success',
+                        duration: 5000,
+                        isClosable: true
+                    });
+                })
+            } else {
+                console.log("Ethereum Object doesn't exist")
+            }
+        } catch (e) {
+            console.log(e)
+        }
     }
 
     const toast = useToast();
@@ -54,9 +123,9 @@ export default function StakeWidget() {
                 <Card p={5} m={5}>
                     <Box textAlign={"center"} mb={5}>
                         <Text fontSize={"xl"} fontWeight={"bold"}>Stake:</Text>
-                        <Skeleton isLoaded={!loadingRewardTokenBalance && !loadingStakeTokenBalance}>
+                        <Skeleton isLoaded={true}>
                             {stakeInfo && stakeInfo[0]? (
-                                <Text>{ethers.utils.formatEther(stakeInfo[0])}{" $" + stakeTokenBalance?.symbol}</Text>
+                                <Text>{ethers.utils.formatEther(stakeInfo[0])}{" $comaiST"}</Text>
                             ): (<Text>0</Text>)}
                             <Text></Text>
                         </Skeleton>
@@ -64,70 +133,39 @@ export default function StakeWidget() {
                     <SimpleGrid columns={2} spacing={4}>
                         <Stack spacing={4}>
                             <Input type="number"
-                            max={stakeTokenBalance?.displayValue}
+                            // max={stakeTokenBalance?.displayValue}
                             value={stakeAmount}
                             onChange={(e)=> setStakeAmount(e.target.value)}></Input>
-                            <Web3Button
-                            contractAddress={COMMUNE_STAKING_CONTRACT_ADDRESS}
-                            action={async(contract)=> {
-                                await stakeTokenContract?.setAllowance(COMMUNE_STAKING_CONTRACT_ADDRESS, stakeAmount);
-                                await contract.call("stake", [ethers.utils.parseEther(stakeAmount)]);
-                                resetValue();
-                            }}
-                            onSuccess={()=> toast({
-                                title: "Stake Successful",
-                                status: 'success',
-                                duration: 5000,
-                                isClosable: true
-                            })}
-                            >Stake</Web3Button>
+                            <Button
+                                onClick={stake}>
+                                Stake
+                            </Button>
                         </Stack>
                         <Stack spacing={4}>
                             <Input type="number"
-                            
                             value={unstakeAmount}
                             onChange={(e)=> setUnstakeAmount(e.target.value)}></Input>
-                            <Web3Button
-                            contractAddress={COMMUNE_STAKING_CONTRACT_ADDRESS}
-                            action={async(contract)=> {
-                                await contract.call("withdraw", [ethers.utils.parseEther(unstakeAmount)]);
-                                resetValue();
-                            }}
-                            onSuccess={()=> toast({
-                                title: "Unstake Successful",
-                                status: 'success',
-                                duration: 5000,
-                                isClosable: true
-                            })}
-                            >Unstake</Web3Button>
+                            <Button
+                                onClick={withdraw}>
+                                Unstake
+                            </Button>
                         </Stack>
                     </SimpleGrid>
                 </Card>
                 <Card p={5} m={5}>
                     <Flex h={"100%"} justifyContent={"space-between"} direction={"column"} >
                         <Text fontSize={"xl"} fontWeight={"bold"}>Reward token: </Text>
-                        <Skeleton isLoaded={!loadingStakeInfo && !loadingRewardTokenBalance}>
+                        <Skeleton isLoaded={true}>
                             {stakeInfo && stakeInfo[0] ? (
                                 <Box>
                                     <Text fontSize={"xl"} fontWeight={"bold"}>{ethers.utils.formatEther(stakeInfo[1])}</Text>
-                                    <Text>{" $" + rewardTokenBalance?.symbol}</Text>
+                                    <Text>{" $comaiRT"}</Text>
                                 </Box>
                             ):(
                                 <Text>0</Text>
                             )}
                         </Skeleton>
-                        <Web3Button
-                        contractAddress={COMMUNE_STAKING_CONTRACT_ADDRESS}
-                        actionn={async(contract)=> {
-                            await contract.call("claimRewards");
-                        }}
-                        onSuccess={()=> toast({
-                            title: "Rewards Claimed",
-                            status: 'success',
-                            duration: 5000,
-                            isClosable: true
-                        })}
-                        >Claim</Web3Button>
+                        <Button onClick={claimRewards}>Claim</Button>
                     </Flex>
                 </Card>
             </SimpleGrid>

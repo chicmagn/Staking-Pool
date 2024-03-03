@@ -1,34 +1,40 @@
-import { ConnectWallet } from "@thirdweb-dev/react";
 import {Container, Heading, Flex, SimpleGrid} from "@chakra-ui/react";
-import { useAddress } from "@thirdweb-dev/react";
 import Navbar from "./components/Navbar";
 import StakeToken from "./components/StakeToken";
 import RewardToken from "./components/RewardToken";
 import StakeWidget from "./components/StakeWidget";
-
+import detectEthereumProvider from '@metamask/detect-provider'
+import { useState, useEffect } from "react";
+import { useSDK } from '@metamask/sdk-react';
 export default function Home() {
-  const address = useAddress();
+
+  const [account, setAccount] = useState();
+  const { sdk, connected, connecting, provider, chainId } = useSDK();
 
   return (
     <Container maxW={"1200px"} py={4}>
       <Navbar></Navbar>
-      {address?
+      {!connected?
         (
-          <Container maxW={"1200px"} py={4}>
-            <Flex h={"50vh"} justifyContent={"center"}>
-                <Heading>Please connect your wallet</Heading>
-            </Flex>
-          </Container>
+          <></>
         ) :
         (<>
-          <SimpleGrid columns={2} spacing={4}>
-            <StakeToken></StakeToken>
+          
+          <div>
+            <>
+              {chainId && `Connected chain: ${chainId}`}
+              <p></p>
+              {account && `Connected account: ${account}`}
+            </>
+          </div>
+          
+          <SimpleGrid columns={1} spacing={4}>
+            {/* <StakeToken></StakeToken> */}
             <RewardToken></RewardToken>
           </SimpleGrid>
           <StakeWidget></StakeWidget>
         </>)
       }
     </Container>
-    
   );
 }
