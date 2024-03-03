@@ -1,7 +1,10 @@
 {
-  "name": "staking-pool",
-  "author": "chic magn",
+  "name": "commune-staking-dapp",
+  "devDependencies": {
+  },
   "dependencies": {
-    "web3": "^4.5.0"
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.20.1",
+    "@openzeppelin/contracts": "^5.0.2"
   }
 }
